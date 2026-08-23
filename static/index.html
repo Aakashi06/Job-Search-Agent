@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Job Search</title>
+  <style>
+    /* Dark default */
+    :root,
+    [data-theme="dark"] {
+      --bg: #000000;
+      --ink: #f5f5f7;
+      --muted: #a1a1a6;
+      --line: rgba(255, 255, 255, 0.12);
+      --glass: rgba(28, 28, 30, 0.72);
+      --glass-strong: rgba(44, 44, 46, 0.78);
+      --glass-edge: rgba(255, 255, 255, 0.14);
+      --chip: rgba(255, 255, 255, 0.08);
+      --chip-hover: rgba(255, 255, 255, 0.14);
+      --blue: #0a84ff;
+      --blue-press: #409cff;
+      --user: #f5f5f7;
+      --user-ink: #1d1d1f;
+      --job-text: #d2d2d7;
+      --placeholder: #636366;
+      --radius: 18px;
+    }
+
+    [data-theme="light"] {
+      --bg: #f5f5f7;
+      --ink: #1d1d1f;
+      --muted: #6e6e73;
+      --line: rgba(0, 0, 0, 0.08);
+      --glass: rgba(255, 255, 255, 0.62);
+      --glass-strong: rgba(255, 255, 255, 0.78);
+      --glass-edge: rgba(255, 255, 255, 0.7);
+      --chip: rgba(255, 255, 255, 0.72);
+      --chip-hover: rgba(255, 255, 255, 0.95);
+      --blue: #0071e3;
+      --blue-press: #0077ed;
+      --user: #1d1d1f;
+      --user-ink: #ffffff;
+      --job-text: #3a3a3c;
+      --placeholder: #aeaeB2;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+        "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.25s ease, color 0.25s ease;
+      overflow-x: hidden;
+    }
+
+    @keyframes glass-sheen {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 0.85; }
+    }
+    @keyframes in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.25; }
+      40% { transform: translateY(-3px); opacity: 1; }
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem clamp(1.25rem, 4vw, 3rem);
+      background: var(--glass);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: saturate(180%) blur(22px);
+      -webkit-backdrop-filter: saturate(180%) blur(22px);
+      animation: glass-sheen 6s ease-in-out infinite;
+    }
+    .brand-name {
+      font-size: 1.08rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .theme-toggle {
+      border: 1px solid var(--line);
+      background: var(--chip);
+      color: var(--ink);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover { background: var(--chip-hover); }
+    .theme-toggle svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+    .theme-toggle .icon-sun { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+    [data-theme="light"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+    #thread {
+      flex: 1;
+      overflow: visible;
+      width: 100%;
+      margin: 0;
+      padding: 1.5rem clamp(1.25rem, 4vw, 3rem) 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .msg {
+      width: 100%;
+      max-width: 100%;
+      animation: in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .msg.user {
+      align-self: flex-end;
+      width: fit-content;
+      max-width: min(720px, 100%);
+      background: var(--user);
+      color: var(--user-ink);
+      padding: 0.78rem 1rem;
+      border-radius: 1.15rem 1.15rem 0.35rem 1.15rem;
+      font-size: 0.94rem;
+      line-height: 1.4;
+      font-weight: 500;
+      white-space: pre-wrap;
+    }
+    .msg.agent {
+      align-self: stretch;
+      max-width: 100%;
+      width: 100%;
+    }
+    .msg.agent .bubble {
+      position: relative;
+      overflow: hidden;
+      background: var(--glass-strong);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.05rem 1.1rem 1.1rem;
+      backdrop-filter: saturate(180%) blur(24px);
+      -webkit-backdrop-filter: saturate(180%) blur(24px);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+    }
+    .msg.agent .bubble::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      box-shadow: inset 0 1px 0 var(--glass-edge);
+      animation: glass-sheen 5s ease-in-out infinite;
+    }
+    .msg.agent .title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      margin: 0 0 0.35rem;
+    }
+    .msg.agent .hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: 0 0 0.9rem;
+    }
+
+    .thinking {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.25rem 0.1rem;
+    }
+    .dots { display: inline-flex; gap: 4px; }
+    .dots span {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--ink);
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: 0.15s; }
+    .dots span:nth-child(3) { animation-delay: 0.3s; }
+
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 1.05rem;
+      position: relative;
+      z-index: 1;
+    }
+    .choice-group .q-prompt {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: baseline;
+      gap: 0.45rem;
+    }
+    .choice-group .q-prompt .multi-tag {
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 500;
+      font-size: 0.7rem;
+      opacity: 0.85;
+    }
+    .choice-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .choice-row button {
+      border: 1px solid var(--line);
+      background: var(--chip);
+      color: var(--ink);
+      border-radius: 980px;
+      padding: 0.48rem 0.88rem;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .choice-row button:hover { background: var(--chip-hover); }
+    .choice-row button.selected {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--bg);
+    }
+    .other-input {
+      display: none;
+      margin-top: 0.55rem;
+      width: min(100%, 320px);
+      border: 1px solid var(--line);
+      background: var(--glass);
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 0.65rem 0.8rem;
+      font: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .other-input.visible { display: block; }
+    .other-input:focus {
+      border-color: color-mix(in srgb, var(--blue) 45%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 16%, transparent);
+    }
+
+    .choice-continue {
+      margin-top: 0.1rem;
+      align-self: flex-start;
+      border: none;
+      cursor: pointer;
+      background: var(--blue);
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.88rem;
+      padding: 0.65rem 1.2rem;
+      border-radius: 980px;
+    }
+    .choice-continue:hover { background: var(--blue-press); }
+    .choice-continue:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .jobs {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      position: relative;
+      z-index: 1;
+    }
+    .job {
+      background: var(--chip);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.05rem 1.15rem;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    .job:hover {
+      border-color: color-mix(in srgb, var(--ink) 18%, transparent);
+      transform: translateY(-1px);
+    }
+    .job h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+    .job .sub {
+      margin: 0.2rem 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+    .job .meta {
+      margin-top: 0.5rem;
+      color: var(--muted);
+      font-size: 0.76rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem 0.75rem;
+    }
+    .job .reason {
+      margin: 0.55rem 0 0;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      color: var(--job-text);
+    }
+    .job .links {
+      margin-top: 0.65rem;
+      display: flex;
+      gap: 0.9rem;
+    }
+    .job a {
+      color: var(--blue);
+      font-size: 0.84rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .job a:hover { text-decoration: underline; }
+
+    .composer-wrap {
+      flex-shrink: 0;
+      width: 100%;
+      margin: 0;
+      padding: 0.55rem clamp(1.25rem, 4vw, 3rem) 1.25rem;
+    }
+    .composer {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.55rem;
+      width: min(720px, 100%);
+      margin: 0 auto;
+      background: var(--glass-strong);
+      border: 1px solid var(--line);
+      border-radius: 1.5rem;
+      padding: 0.7rem 0.7rem 0.7rem 1.2rem;
+      backdrop-filter: saturate(180%) blur(28px);
+      -webkit-backdrop-filter: saturate(180%) blur(28px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      animation: glass-sheen 7s ease-in-out infinite;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .composer:focus-within {
+      border-color: color-mix(in srgb, var(--ink) 22%, transparent);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16);
+    }
+    .composer textarea {
+      flex: 1;
+      border: none;
+      outline: none;
+      resize: none;
+      background: transparent;
+      font: inherit;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      max-height: 140px;
+      min-height: 24px;
+      padding: 0.5rem 0;
+      color: var(--ink);
+    }
+    .composer textarea::placeholder { color: var(--placeholder); }
+    .composer button.send {
+      border: none;
+      cursor: pointer;
+      background: var(--blue);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1rem;
+      font-weight: 600;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+    }
+    .composer button.send:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .empty-state {
+      margin: auto;
+      text-align: center;
+      max-width: 40rem;
+      padding: 4rem 1.25rem 5rem;
+      animation: in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .empty-state .eyebrow {
+      margin: 0 0 1rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .empty-state h2 {
+      margin: 0;
+      font-size: clamp(2.6rem, 7vw, 4rem);
+      font-weight: 600;
+      letter-spacing: -0.045em;
+      line-height: 1.02;
+    }
+    .empty-state .tagline {
+      margin: 1rem auto 0;
+      max-width: 22rem;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-name">Job Search</div>
+    <div class="top-actions">
+      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="thread">
+    <div class="empty-state" id="empty">
+      <p class="eyebrow">Job Search</p>
+      <h2>Your next role,<br />closer than you think.</h2>
+      <p class="tagline">Tell us what you want. We’ll find roles that fit — fast, focused, and for you.</p>
+    </div>
+  </div>
+
+  <div class="composer-wrap">
+    <form class="composer" id="form">
+      <textarea id="input" rows="1" placeholder="What role are you looking for?" autocomplete="off"></textarea>
+      <button type="submit" class="send" id="send" aria-label="Send">↑</button>
+    </form>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const thread = document.getElementById("thread");
+    const empty = document.getElementById("empty");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+    const themeToggle = document.getElementById("themeToggle");
+
+    let busy = false;
+    let sessionQuery = "";
+    let answers = {};
+    let awaitingChoices = false;
+    let thinkingEl = null;
+    let statusTimer = null;
+
+    const STATUS_LINES = ["Thinking", "Searching", "Reading", "Matching"];
+    const THEME_KEY = "jobsearch-theme";
+
+    // Theme: dark default — icons swap via CSS
+    (function initTheme() {
+      const saved = localStorage.getItem(THEME_KEY);
+      const theme = saved === "light" || saved === "dark" ? saved : "dark";
+      root.setAttribute("data-theme", theme);
+      themeToggle.setAttribute(
+        "aria-label",
+        theme === "dark" ? "Switch to light theme" : "Switch to dark theme"
+      );
+    })();
+
+    themeToggle.addEventListener("click", () => {
+      const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      localStorage.setItem(THEME_KEY, next);
+      themeToggle.setAttribute(
+        "aria-label",
+        next === "dark" ? "Switch to light theme" : "Switch to dark theme"
+      );
+    });
+
+    input.addEventListener("input", autosize);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text || busy || awaitingChoices) return;
+      input.value = "";
+      autosize();
+      await handleUserMessage(text);
+    });
+
+    function autosize() {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 140) + "px";
+    }
+
+    function hideEmpty() {
+      if (empty) empty.remove();
+    }
+
+    function addUser(text) {
+      hideEmpty();
+      const el = document.createElement("div");
+      el.className = "msg user";
+      el.textContent = text;
+      thread.appendChild(el);
+      scrollDown();
+    }
+
+    function addAgentBubble(build) {
+      hideEmpty();
+      const wrap = document.createElement("div");
+      wrap.className = "msg agent";
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      build(bubble);
+      wrap.appendChild(bubble);
+      thread.appendChild(wrap);
+      scrollDown();
+      return wrap;
+    }
+
+    function addAgentPlain(nodeOrHtml) {
+      hideEmpty();
+      const wrap = document.createElement("div");
+      wrap.className = "msg agent";
+      if (typeof nodeOrHtml === "string") {
+        wrap.innerHTML = nodeOrHtml;
+      } else {
+        wrap.appendChild(nodeOrHtml);
+      }
+      thread.appendChild(wrap);
+      scrollDown();
+      return wrap;
+    }
+
+    function showThinking(label = "Thinking") {
+      removeThinking();
+      const body = document.createElement("div");
+      body.className = "thinking";
+      body.innerHTML = `
+        <span class="text">${escapeHtml(label)}</span>
+        <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
+      `;
+      thinkingEl = addAgentPlain(body);
+      let i = 0;
+      statusTimer = setInterval(() => {
+        if (!thinkingEl) return;
+        i = (i + 1) % STATUS_LINES.length;
+        const t = thinkingEl.querySelector(".thinking .text");
+        if (t) t.textContent = STATUS_LINES[i];
+      }, 2600);
+    }
+
+    function updateThinking(label) {
+      if (!thinkingEl) return;
+      const t = thinkingEl.querySelector(".thinking .text");
+      if (t && label) t.textContent = label;
+    }
+
+    function removeThinking() {
+      if (statusTimer) {
+        clearInterval(statusTimer);
+        statusTimer = null;
+      }
+      if (thinkingEl) {
+        thinkingEl.remove();
+        thinkingEl = null;
+      }
+    }
+
+    function scrollDown() {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
+
+    function setBusy(v) {
+      busy = v;
+      sendBtn.disabled = v || awaitingChoices;
+      input.disabled = awaitingChoices;
+      input.placeholder = awaitingChoices ? "Select options above…" : "What role are you looking for?";
+    }
+
+    function setAwaitingChoices(v) {
+      awaitingChoices = v;
+      setBusy(busy);
+    }
+
+    async function handleUserMessage(text) {
+      if (awaitingChoices) return;
+      addUser(text);
+      setBusy(true);
+      sessionQuery = text;
+      answers = {};
+
+      try {
+        showThinking("Thinking");
+        const data = await clarify(sessionQuery, answers);
+        removeThinking();
+
+        if (!data.ready) {
+          showChoiceQuestions(data);
+          return;
+        }
+
+        await runSearch(data.search_query || sessionQuery, data.criteria || {});
+      } catch (err) {
+        removeThinking();
+        addAgentBubble((b) => {
+          b.textContent = err.message || "Something went wrong.";
+        });
+        setBusy(false);
+      }
+    }
+
+    function showChoiceQuestions(data) {
+      const questions = data.questions || [];
+      // selected[id] = string (single) or string[] (multi)
+      const selected = {};
+      const otherText = {};
+      const otherOn = {};
+
+      const known = data.criteria || {};
+      questions.forEach((q) => {
+        if (!known[q.id]) return;
+        const knownParts = String(known[q.id])
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const optionValues = new Set((q.options || []).map((o) => o.value));
+        const matched = knownParts.filter((p) => optionValues.has(p));
+        if (!matched.length) return;
+        selected[q.id] = q.multi ? matched : matched[0];
+      });
+
+      addAgentBubble((bubble) => {
+        const title = document.createElement("div");
+        title.className = "title";
+        title.textContent = data.message || "Refine your search";
+        bubble.appendChild(title);
+
+        const hint = document.createElement("div");
+        hint.className = "hint";
+        hint.textContent = "Select all that apply where marked.";
+        bubble.appendChild(hint);
+
+        const choices = document.createElement("div");
+        choices.className = "choices";
+
+        questions.forEach((q) => {
+          const multi = !!q.multi;
+          const group = document.createElement("div");
+          group.className = "choice-group";
+
+          const prompt = document.createElement("div");
+          prompt.className = "q-prompt";
+          prompt.innerHTML = `${escapeHtml(q.prompt)}${
+            multi ? '<span class="multi-tag">· select multiple</span>' : ""
+          }`;
+          group.appendChild(prompt);
+
+          const row = document.createElement("div");
+          row.className = "choice-row";
+
+          const otherInput = document.createElement("input");
+          otherInput.type = "text";
+          otherInput.className = "other-input";
+          otherInput.placeholder = q.other_placeholder || "Type your answer";
+          otherInput.addEventListener("input", () => {
+            otherText[q.id] = otherInput.value.trim();
+            refreshContinue();
+          });
+
+          function currentList() {
+            const v = selected[q.id];
+            if (!v) return [];
+            return multi ? [...v] : [v];
+          }
+
+          function setList(list) {
+            if (multi) selected[q.id] = list;
+            else selected[q.id] = list[0];
+          }
+
+          function syncButtons() {
+            const list = new Set(currentList());
+            row.querySelectorAll("button").forEach((b) => {
+              const val = b.dataset.value;
+              if (val === "__other__") {
+                b.classList.toggle("selected", !!otherOn[q.id]);
+              } else {
+                b.classList.toggle("selected", list.has(val));
+              }
+            });
+            otherInput.classList.toggle("visible", !!otherOn[q.id]);
+          }
+
+          (q.options || []).forEach((opt) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = opt.label;
+            btn.dataset.value = opt.value;
+
+            btn.addEventListener("click", () => {
+              if (opt.value === "__other__") {
+                otherOn[q.id] = !otherOn[q.id];
+                if (otherOn[q.id]) {
+                  otherInput.classList.add("visible");
+                  otherInput.focus();
+                } else {
+                  otherInput.classList.remove("visible");
+                  otherInput.value = "";
+                  delete otherText[q.id];
+                }
+                // For single-select, Other clears other chips
+                if (!multi && otherOn[q.id]) {
+                  delete selected[q.id];
+                }
+                syncButtons();
+                refreshContinue();
+                return;
+              }
+
+              if (multi) {
+                let list = currentList();
+                if (list.includes(opt.value)) {
+                  list = list.filter((x) => x !== opt.value);
+                } else {
+                  list = [...list, opt.value];
+                }
+                if (list.length) setList(list);
+                else delete selected[q.id];
+              } else {
+                otherOn[q.id] = false;
+                otherInput.classList.remove("visible");
+                otherInput.value = "";
+                delete otherText[q.id];
+                selected[q.id] = opt.value;
+              }
+              syncButtons();
+              refreshContinue();
+            });
+            row.appendChild(btn);
+          });
+
+          group.appendChild(row);
+          group.appendChild(otherInput);
+          choices.appendChild(group);
+          syncButtons();
+        });
+
+        const continueBtn = document.createElement("button");
+        continueBtn.type = "button";
+        continueBtn.className = "choice-continue";
+        continueBtn.textContent = "Continue";
+        continueBtn.disabled = true;
+
+        function resolvedAnswers() {
+          const out = {};
+          for (const q of questions) {
+            const multi = !!q.multi;
+            let values = [];
+            if (multi) {
+              values = Array.isArray(selected[q.id]) ? [...selected[q.id]] : [];
+            } else if (selected[q.id]) {
+              values = [selected[q.id]];
+            }
+            if (otherOn[q.id]) {
+              const custom = (otherText[q.id] || "").trim();
+              if (!custom) return null;
+              values.push(custom);
+            }
+            if (!values.length) return null;
+            out[q.id] = multi ? values : values[0];
+          }
+          return out;
+        }
+
+        function refreshContinue() {
+          continueBtn.disabled = !resolvedAnswers();
+        }
+        refreshContinue();
+
+        continueBtn.addEventListener("click", async () => {
+          const picked = resolvedAnswers();
+          if (!picked) return;
+          continueBtn.disabled = true;
+          setAwaitingChoices(false);
+          setBusy(true);
+
+          const summary = questions
+            .map((q) => {
+              const v = picked[q.id];
+              return Array.isArray(v) ? v.join(", ") : v;
+            })
+            .join(" · ");
+          addUser(summary);
+
+          choices.querySelectorAll("button, input").forEach((el) => {
+            el.disabled = true;
+          });
+
+          // Store multi as comma strings for criteria display consistency
+          const normalized = {};
+          Object.entries(picked).forEach(([k, v]) => {
+            normalized[k] = Array.isArray(v) ? v.join(", ") : v;
+          });
+          answers = { ...answers, ...normalized };
+
+          try {
+            showThinking("Thinking");
+            const next = await clarify(sessionQuery, answers);
+            removeThinking();
+            if (!next.ready) {
+              showChoiceQuestions(next);
+              return;
+            }
+            await runSearch(next.search_query || sessionQuery, next.criteria || {});
+          } catch (err) {
+            removeThinking();
+            addAgentBubble((b) => {
+              b.textContent = err.message || "Something went wrong.";
+            });
+            setBusy(false);
+          }
+        });
+
+        choices.appendChild(continueBtn);
+        bubble.appendChild(choices);
+      });
+
+      setAwaitingChoices(true);
+      setBusy(false);
+      scrollDown();
+    }
+
+    async function clarify(query, ans) {
+      const res = await fetch("/api/clarify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, answers: ans }),
+      });
+      if (!res.ok) throw new Error(`Server error (${res.status})`);
+      return res.json();
+    }
+
+    async function runSearch(query, criteria) {
+      showThinking("Searching");
+      try {
+        const res = await fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, criteria }),
+        });
+        if (!res.ok || !res.body) throw new Error(`Server error (${res.status})`);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let result = null;
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const chunks = buffer.split("\n\n");
+          buffer = chunks.pop() || "";
+          for (const chunk of chunks) {
+            const dataLines = chunk
+              .split("\n")
+              .filter((l) => l.startsWith("data:"))
+              .map((l) => l.slice(5).trim());
+            if (!dataLines.length) continue;
+            let evt;
+            try {
+              evt = JSON.parse(dataLines.join("\n"));
+            } catch {
+              continue;
+            }
+            if (evt.type === "status") {
+              const map = {
+                thinking: "Thinking",
+                searching: "Searching",
+                reading: "Reading",
+                refining: "Matching",
+                done: "Done",
+                error: "Error",
+              };
+              if (evt.phase !== "done") {
+                updateThinking(map[evt.phase] || "Working");
+              }
+            } else if (evt.type === "result") {
+              result = evt.data;
+            }
+          }
+        }
+
+        removeThinking();
+        renderJobs(result || { jobs: [] });
+      } catch (err) {
+        removeThinking();
+        addAgentBubble((b) => {
+          b.textContent = err.message || "Search failed.";
+        });
+      } finally {
+        setBusy(false);
+        input.focus();
+      }
+    }
+
+    function renderJobs(data) {
+      const jobs = data.jobs || [];
+      const c = data.search_criteria || {};
+      const summaryBits = [c.role, c.work_mode, c.location, c.experience]
+        .filter(Boolean)
+        .join(" · ");
+
+      addAgentBubble((bubble) => {
+        const title = document.createElement("div");
+        title.className = "title";
+        title.textContent = jobs.length
+          ? `${jobs.length} result${jobs.length === 1 ? "" : "s"}`
+          : "No matches";
+        if (summaryBits) title.textContent += ` · ${summaryBits}`;
+        bubble.appendChild(title);
+
+        if (!jobs.length) {
+          const p = document.createElement("div");
+          p.style.color = "var(--muted)";
+          p.style.fontSize = "0.9rem";
+          p.textContent = "Try a broader role or location.";
+          bubble.appendChild(p);
+          return;
+        }
+
+        const list = document.createElement("div");
+        list.className = "jobs";
+        jobs.forEach((job) => {
+          const card = document.createElement("article");
+          card.className = "job";
+          card.innerHTML = `
+            <h3>${escapeHtml(job.title || "Untitled role")}</h3>
+            <p class="sub">${escapeHtml(job.company || "Unknown company")}</p>
+            <div class="meta">
+              <span>${escapeHtml(job.location || "—")}</span>
+              <span>${escapeHtml(job.work_mode || "—")}</span>
+              <span>${escapeHtml(job.experience || "—")}</span>
+              <span>${escapeHtml(job.posted_date || "")}</span>
+            </div>
+            ${job.relevance_reason ? `<p class="reason">${escapeHtml(job.relevance_reason)}</p>` : ""}
+            <div class="links">
+              ${job.apply_url ? `<a href="${escapeAttr(job.apply_url)}" target="_blank" rel="noopener">Apply</a>` : ""}
+              ${job.source_url ? `<a href="${escapeAttr(job.source_url)}" target="_blank" rel="noopener">Source</a>` : ""}
+            </div>
+          `;
+          list.appendChild(card);
+        });
+        bubble.appendChild(list);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+    function escapeAttr(str) {
+      return escapeHtml(str).replaceAll("'", "&#39;");
+    }
+  </script>
+</body>
+</html>
