@@ -23,10 +23,10 @@ A local job-discovery agent with a minimal chat UI. Preferences in, clarifying q
 
 ## What it does
 
-You describe the role in plain language. If a detail is missing, the UI asks a short multiple-choice question, with an Other option. Python searches the web and reads a few pages. A tiny local model, `SmolLM2-135M-Instruct`, extracts the matching jobs in one pass. Results land in a quiet chat UI, with thinking dots while it works.
+You describe the role in plain language. If a detail is missing, the UI asks a short multiple-choice question, with an Other option. The agent then calls its tools, and a tiny local model, `SmolLM2-135M-Instruct`, turns what they returned into job cards. Results land in a quiet chat UI, with thinking dots while it works.
 
 ```text
-preferences  →  clarify  →  search and read  →  extract  →  chat results
+preferences  →  clarify  →  search tool  →  read tool  →  extract  →  chat results
 ```
 
 After warmup, a search stays near 10 seconds. The model preloads in the background so the first real query is already warm.
@@ -42,14 +42,29 @@ After warmup, a search stays near 10 seconds. The model preloads in the backgrou
 
 ---
 
+## Tool calls
+
+Each search runs two tools, then one model pass.
+
+| Tool | What it does |
+| --- | --- |
+| **Web search** | DuckDuckGo text search from the brief plus role, location, and work mode. Returns the top hits. |
+| **Page reader** | Fetches the top pages, strips them to text, and keeps a short excerpt for the model. |
+
+`agent.py` calls them in order: search, then read, then extract. Status events stream to the UI over SSE while each step runs: Thinking, Searching, Reading, Matching, Refining.
+
+The local model does the last step. It reads the tool output and returns matching jobs as JSON: title, company, location, skills, apply link, and why it fits.
+
+---
+
 ## Features
 
 - **Natural-language brief.** Type the role, stack, location, or constraints the way you would say them.
 - **Guided clarify step.** Missing details become multiple-choice questions, with Other when none of the options fit.
-- **Live web search.** Python finds pages and reads a few of them before the model runs.
-- **One local pass.** `SmolLM2-135M-Instruct` extracts and ranks jobs from the fetched text.
-- **Minimal chat UI.** Themes, multi-select, and a thinking state while the search runs.
-- **Streaming updates.** FastAPI serves the UI and pushes progress over SSE.
+- **Two built-in tools.** Search the web, then read the pages that came back.
+- **One local pass.** `SmolLM2-135M-Instruct` extracts and ranks jobs from the tool output.
+- **Minimal chat UI.** Themes, multi-select, and a thinking state while the tools run.
+- **Streaming updates.** FastAPI pushes each phase over SSE.
 - **Stays on your machine.** Search, fetch, and the model run locally. The model downloads once.
 
 ---
@@ -58,9 +73,11 @@ After warmup, a search stays near 10 seconds. The model preloads in the backgrou
 
 | Piece | Owns |
 | --- | --- |
-| **Python** | Web search, page fetch, dates, dedupe, formatting |
-| **Local model** | Extract and rank jobs from the fetched text |
-| **UI** | Preferences, clarifying questions, results |
+| **Search tool** | DuckDuckGo hits for the brief |
+| **Read tool** | Page fetch and clean text |
+| **Local model** | Extract and rank jobs from that text |
+| **Python** | Order the calls, dedupe, dates, formatting |
+| **UI** | Preferences, clarifying questions, live status, results |
 
 ---
 
@@ -71,7 +88,7 @@ After warmup, a search stays near 10 seconds. The model preloads in the backgrou
 | UI | `static/index.html` |
 | Server | FastAPI, SSE, model preload (`app.py`) |
 | Clarify | `clarify.py` |
-| Search | `agent.py` |
+| Tools + extract | `agent.py` |
 | Results | `postprocess.py` |
 | Model | `SmolLM2-135M-Instruct`, set in `config.py` |
 
@@ -82,7 +99,7 @@ After warmup, a search stays near 10 seconds. The model preloads in the backgrou
 ```text
 Job-Search-Agent/
 ├── app.py              # FastAPI server, SSE, model preload
-├── agent.py            # search + one local model pass
+├── agent.py            # search tool, read tool, one local model pass
 ├── clarify.py          # preference questions
 ├── postprocess.py      # filter, dedupe, JSON shape
 ├── config.py           # model id and speed limits
