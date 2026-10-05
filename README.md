@@ -3,6 +3,11 @@
 Minimal local AI job-discovery agent with an interactive **web UI**.
 
 Uses a tiny free local model (`SmolLM2-135M-Instruct`) plus Python web search/fetch for ~10s responses.
+<img width="1919" height="1001" alt="image" src="https://github.com/user-attachments/assets/668056e3-1617-4ec3-adda-212aa93547c8" />
+<img width="1905" height="966" alt="image" src="https://github.com/user-attachments/assets/2e1571eb-4998-454f-9c0f-9d48ef53e017" />
+
+
+
 
 ## What it does
 
