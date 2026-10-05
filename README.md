@@ -31,13 +31,12 @@ preferences  →  clarify  →  search tool  →  read tool  →  extract  →  
 
 After warmup, a search stays near 10 seconds. The model preloads in the background so the first real query is already warm.
 
-<p align="center">
+<p>
   <img width="48%" alt="Job Search Agent chat" src="https://github.com/user-attachments/assets/668056e3-1617-4ec3-adda-212aa93547c8" />
-  <img width="48%" alt="Job Search Agent results" src="https://github.com/user-attachments/assets/2e1571eb-4998-454f-9c0f-9d48ef53e017" />
 </p>
 
-<p align="center">
-  <sub>Chat · results</sub>
+<p>
+   <img width="48%" alt="Job Search Agent results" src="https://github.com/user-attachments/assets/2e1571eb-4998-454f-9c0f-9d48ef53e017" />
 </p>
 
 ---
